@@ -19,3 +19,5 @@ htmlcov/
 # Generated workloads and indexes
 data/generated/
 artifacts/
+
+.local

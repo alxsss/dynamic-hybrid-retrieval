@@ -1,2 +1,5 @@
+from dynamic_hybrid_retrieval.cli import app
+
+
 def main() -> None:
-    print("Hello from dynamic-hybrid-retrieval!")
+    app()
