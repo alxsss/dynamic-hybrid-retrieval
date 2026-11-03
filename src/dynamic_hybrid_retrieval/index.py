@@ -41,6 +41,15 @@ class DynamicIndexStatistics:
     last_sequence_number: int
 
 
+@dataclass(frozen=True, slots=True)
+class CompactionSnapshot:
+    """Consistent logical state captured at one event-log high-water mark."""
+
+    documents: tuple[Document, ...]
+    high_water_sequence: int
+    query_results: tuple[tuple[str, tuple[SearchResult, ...]], ...]
+
+
 class DynamicIndex:
     """Present an immutable baseline and mutable delta as one logical BM25 index.
 
@@ -277,6 +286,33 @@ class DynamicIndex:
                 )
                 for document_id, score in ranked
             ]
+
+    def snapshot_for_compaction(
+        self,
+        validation_queries: tuple[str, ...] = (),
+        *,
+        query_limit: int = 10,
+    ) -> CompactionSnapshot:
+        """Capture live documents and validation results under one read lock."""
+
+        if query_limit < 1:
+            raise ValueError("query_limit must be at least one")
+        with self._lock:
+            document_ids = set(self.baseline.documents) | set(self._delta_documents)
+            documents = tuple(
+                document
+                for document_id in sorted(document_ids)
+                if (document := self._current_document(document_id)) is not None
+            )
+            query_results = tuple(
+                (query, tuple(self.search(query, limit=query_limit)))
+                for query in validation_queries
+            )
+            return CompactionSnapshot(
+                documents=documents,
+                high_water_sequence=self._last_sequence_number,
+                query_results=query_results,
+            )
 
     def _score_term(
         self,
