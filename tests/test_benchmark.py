@@ -26,6 +26,11 @@ def test_small_benchmark_exercises_acceptance_workflow(tmp_path: Path) -> None:
     assert report.apply_latency.count == 10
     assert report.update_visibility_latency.count == 10
     assert report.final_event_sequence == 10
+    assert report.environment.python_version
+    assert report.baseline_build_documents_per_second > 0
+    assert report.replay_events_per_second > 0
+    assert report.repository_bytes > 0
+    assert report.event_log_bytes > 0
     assert orjson.loads((output / "report.json").read_bytes())["passed"] is True
 
 

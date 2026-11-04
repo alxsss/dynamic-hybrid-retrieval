@@ -9,6 +9,7 @@ import orjson
 import typer
 
 from dynamic_hybrid_retrieval.benchmark import BenchmarkConfig, run_benchmark
+from dynamic_hybrid_retrieval.diagnostics import inspect_repository
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
 
@@ -41,6 +42,19 @@ def benchmark(
     report = run_benchmark(output, config)
     typer.echo(orjson.dumps(report.as_dict(), option=orjson.OPT_INDENT_2).decode())
     if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def status(
+    repository: Annotated[Path, typer.Option(help="Index repository directory.")],
+    event_log: Annotated[Path, typer.Option(help="Checksummed event-log file.")],
+) -> None:
+    """Validate an index repository and print machine-readable health."""
+
+    result = inspect_repository(repository, event_log)
+    typer.echo(orjson.dumps(result.as_dict(), option=orjson.OPT_INDENT_2).decode())
+    if not result.healthy:
         raise typer.Exit(code=1)
 
 

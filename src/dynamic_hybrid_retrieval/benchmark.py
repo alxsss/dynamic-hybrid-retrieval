@@ -6,6 +6,7 @@ import math
 import shutil
 import time
 from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,7 @@ import orjson
 
 from dynamic_hybrid_retrieval.bm25 import BM25Index, SearchResult
 from dynamic_hybrid_retrieval.compaction import IndexRepository
+from dynamic_hybrid_retrieval.diagnostics import RuntimeEnvironment, directory_size
 from dynamic_hybrid_retrieval.event_log import EventLog
 from dynamic_hybrid_retrieval.generate import (
     event_marker,
@@ -45,12 +47,16 @@ class BenchmarkConfig:
 @dataclass(frozen=True, slots=True)
 class BenchmarkReport:
     config: BenchmarkConfig
+    generated_at: str
+    environment: RuntimeEnvironment
     baseline_build_seconds: float
+    baseline_build_documents_per_second: float
     before_updates_query_latency: LatencySummary
     apply_latency: LatencySummary
     update_visibility_latency: LatencySummary
     after_updates_query_latency: LatencySummary
     replay_seconds: float
+    replay_events_per_second: float
     replay_equivalent: bool
     deleted_documents_returned: int
     freshness_violations: int
@@ -58,6 +64,8 @@ class BenchmarkReport:
     compaction_equivalent: bool
     final_live_document_count: int
     final_event_sequence: int
+    repository_bytes: int
+    event_log_bytes: int
 
     @property
     def passed(self) -> bool:
@@ -217,12 +225,16 @@ def run_benchmark(root: str | Path, config: BenchmarkConfig) -> BenchmarkReport:
 
     report = BenchmarkReport(
         config=config,
+        generated_at=datetime.now(UTC).isoformat(),
+        environment=RuntimeEnvironment.capture(),
         baseline_build_seconds=baseline_build_seconds,
+        baseline_build_documents_per_second=config.document_count / baseline_build_seconds,
         before_updates_query_latency=before_latency,
         apply_latency=apply_recorder.summarize(),
         update_visibility_latency=freshness_summary,
         after_updates_query_latency=after_latency,
         replay_seconds=replay_seconds,
+        replay_events_per_second=config.event_count / replay_seconds,
         replay_equivalent=replay_equivalent,
         deleted_documents_returned=deleted_documents_returned,
         freshness_violations=freshness_violations,
@@ -230,6 +242,8 @@ def run_benchmark(root: str | Path, config: BenchmarkConfig) -> BenchmarkReport:
         compaction_equivalent=compaction_equivalent,
         final_live_document_count=compacted.statistics.live_document_count,
         final_event_sequence=compacted.statistics.last_sequence_number,
+        repository_bytes=directory_size(repository.root),
+        event_log_bytes=event_log.path.stat().st_size,
     )
     report.write_json(benchmark_root / "report.json")
     return report
