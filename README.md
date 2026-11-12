@@ -1,15 +1,27 @@
 # Dynamic Hybrid Retrieval
 
-A production-oriented reference implementation of a single-host dynamic BM25
-index. It combines an immutable baseline with a searchable in-memory delta,
-durably records accepted changes in a checksummed write-ahead log, and compacts
-logical state into atomically activated immutable generations.
+A production-oriented reference implementation of single-host dynamic lexical
+and dense retrieval. It combines immutable baseline indexes with searchable
+in-memory deltas, durably records accepted changes in a checksummed write-ahead
+log, and compacts logical state into atomically activated immutable generations.
 
 The project exists to make indexing mechanics visible and testable before later
-comparison with OpenSearch or addition of dense retrieval. It currently covers
-deterministic tokenization and BM25 ranking, inserts and updates, tombstone-based
-deletion, crash replay, compaction validation, rollback, benchmarking, and
-read-only operational health checks.
+comparison with OpenSearch. It currently covers deterministic tokenization and
+BM25 ranking, persistent HNSW dense retrieval, inserts and updates,
+tombstone-based deletion, crash replay, compaction validation, rollback,
+benchmarking, and read-only operational health checks.
+
+## Architecture
+
+- Immutable BM25 and HNSW baseline generations
+- Searchable in-memory lexical and dense deltas
+- Version masking and deletion tombstones
+- Checksummed append-only write-ahead logging and deterministic replay
+- Validated compaction with atomic generation activation and rollback
+- Deterministic benchmarks and correctness gates
+
+Reciprocal-rank fusion, metadata filtering, and hand-verified relevance
+evaluation are active milestones documented in `docs/week2-rfc.md`.
 
 ## Development checks
 
@@ -52,4 +64,4 @@ semantics.
 The current system is intentionally single-process and single-writer. It is
 crash-consistent on a local filesystem with atomic rename support, but it is not
 a distributed or highly available search service. OpenSearch comparison,
-replication, sharding, dense retrieval, and hybrid fusion are future milestones.
+replication, sharding, and hybrid fusion remain future milestones.

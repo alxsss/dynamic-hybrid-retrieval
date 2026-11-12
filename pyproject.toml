@@ -1,7 +1,7 @@
 [project]
 name = "dynamic-hybrid-retrieval"
 version = "0.1.0"
-description = "Add your description here"
+description = "Production-oriented dynamic lexical and dense retrieval with deterministic recovery and evaluation"
 readme = "README.md"
 authors = [
     { name = "Alexander Kingson", email = "alxksn@gmail.com" }

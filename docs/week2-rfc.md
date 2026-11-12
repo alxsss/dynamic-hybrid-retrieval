@@ -28,7 +28,7 @@ mapping, model identity, dimensionality, metric, and construction parameters.
 ## Day plan
 
 1. Define embedding contracts and persist a cosine HNSW baseline.
-2. Add dynamic dense inserts, updates, deletes, replay, and compaction semantics.
+2. Add dynamic dense inserts, updates, deletes, replay, and compaction semantics. **Complete.**
 3. Implement RRF with deterministic tie-breaking and explainable component ranks.
 4. Add typed metadata filters with pre-filter/post-filter correctness tests.
 5. Create the first hand-verified query/relevance judgment set.

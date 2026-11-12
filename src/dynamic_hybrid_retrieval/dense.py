@@ -141,6 +141,10 @@ class HNSWIndex:
     def document_count(self) -> int:
         return len(self._documents)
 
+    @property
+    def documents(self) -> tuple[Document, ...]:
+        return self._documents
+
     def search(
         self, query: str, *, limit: int = 10, exact: bool = False
     ) -> list[DenseSearchResult]:
