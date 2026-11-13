@@ -31,7 +31,7 @@ mapping, model identity, dimensionality, metric, and construction parameters.
 2. Add dynamic dense inserts, updates, deletes, replay, and compaction semantics. **Complete.**
 3. Implement RRF with deterministic tie-breaking and explainable component ranks. **Complete.**
 4. Add typed metadata filters with pre-filter/post-filter correctness tests. **Complete.**
-5. Create the first hand-verified query/relevance judgment set.
+5. Create the first hand-verified query/relevance judgment set. **Complete.**
 6. Implement Recall@K, MRR, nDCG@K, latency, and HNSW recall measurements.
 7. Produce reproducible BM25-versus-dense-versus-hybrid results and analysis.
 

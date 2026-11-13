@@ -1,0 +1,24 @@
+{
+  "annotation_policy": "All 16 documents were reviewed for every query. Positive judgments use grades 1 through 3 and require a written rationale.",
+  "dataset_id": "dynamic-retrieval-eval-v1",
+  "description": "Hand-reviewed retrieval judgments covering lexical, semantic, hybrid, filtering, and search-infrastructure intents.",
+  "files": {
+    "documents.jsonl": {
+      "bytes": 6085,
+      "records": 16,
+      "sha256": "37a0eff4be5fd64421b65fb45b898f97db8e75696edae5c2a2c53698dd1a7465"
+    },
+    "qrels.jsonl": {
+      "bytes": 3900,
+      "records": 23,
+      "sha256": "3bc9f69acda6c7a4cfe2b199e9bf24168a638b58e7101b05755fae1edefa7e60"
+    },
+    "queries.jsonl": {
+      "bytes": 2218,
+      "records": 10,
+      "sha256": "40234324c72b768f8c34f90dd18b233ef1b4a338a5e97805a87c006cea713f91"
+    }
+  },
+  "format_version": 1,
+  "unjudged_policy": "Every query/document pair was assessed; omitted pairs have relevance grade zero."
+}

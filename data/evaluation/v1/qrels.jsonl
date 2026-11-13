@@ -1,0 +1,23 @@
+{"document_id":"eval-doc-01","query_id":"eval-q01","rationale":"Directly explains write-before-acknowledge durability and deterministic replay after a crash.","relevance":3}
+{"document_id":"eval-doc-14","query_id":"eval-q01","rationale":"Describes the same write-ahead recovery principle in databases, but not the search indexing implementation.","relevance":1}
+{"document_id":"eval-doc-09","query_id":"eval-q01","rationale":"Addresses machine-failure availability, but replication is adjacent to rather than the requested local recovery mechanism.","relevance":1}
+{"document_id":"eval-doc-02","query_id":"eval-q02","rationale":"Directly explains tombstone masking and eventual physical deletion during compaction.","relevance":3}
+{"document_id":"eval-doc-03","query_id":"eval-q02","rationale":"Compaction physically removes deleted documents, but it does not explain the immediate query-time protection as fully.","relevance":2}
+{"document_id":"eval-doc-08","query_id":"eval-q02","rationale":"Candidate filtering is related to result exclusion but is not specifically deletion semantics.","relevance":1}
+{"document_id":"eval-doc-07","query_id":"eval-q03","rationale":"Directly describes reciprocal-rank fusion of lexical and dense rankings without raw-score addition.","relevance":3}
+{"document_id":"eval-doc-04","query_id":"eval-q03","rationale":"Explains the lexical component of the requested hybrid system.","relevance":2}
+{"document_id":"eval-doc-05","query_id":"eval-q03","rationale":"Explains the semantic component of the requested hybrid system.","relevance":2}
+{"document_id":"eval-doc-06","query_id":"eval-q04","rationale":"Directly covers HNSW graph parameters and the recall-latency tradeoff.","relevance":3}
+{"document_id":"eval-doc-05","query_id":"eval-q04","rationale":"Provides dense-retrieval context but not approximate graph tuning details.","relevance":1}
+{"document_id":"eval-doc-03","query_id":"eval-q05","rationale":"Directly explains high-water compaction into a new baseline, which bounds later replay work.","relevance":3}
+{"document_id":"eval-doc-01","query_id":"eval-q05","rationale":"Explains replay itself but not how compaction reduces the accumulated replay interval.","relevance":2}
+{"document_id":"eval-doc-16","query_id":"eval-q05","rationale":"Covers dense compaction, which is relevant but narrower than the general restart concern.","relevance":1}
+{"document_id":"eval-doc-08","query_id":"eval-q06","rationale":"Directly describes typed region and publication-year filters and filtered candidate expansion.","relevance":3}
+{"document_id":"eval-doc-15","query_id":"eval-q07","rationale":"Directly explains relevance judgments and standard ranked-retrieval quality metrics.","relevance":3}
+{"document_id":"eval-doc-10","query_id":"eval-q07","rationale":"Covers operational measurements but only indirectly addresses offline relevance quality.","relevance":1}
+{"document_id":"eval-doc-13","query_id":"eval-q08","rationale":"Contains the exact rare identifier and its diagnostic meaning.","relevance":3}
+{"document_id":"eval-doc-05","query_id":"eval-q09","rationale":"Directly explains shared vector-space retrieval of similar meaning without identical wording.","relevance":3}
+{"document_id":"eval-doc-07","query_id":"eval-q09","rationale":"Uses semantic retrieval as a hybrid component but is not primarily about embedding behavior.","relevance":1}
+{"document_id":"eval-doc-16","query_id":"eval-q10","rationale":"Directly explains delta embeddings, baseline-vector masking, and physical removal through dense compaction.","relevance":3}
+{"document_id":"eval-doc-02","query_id":"eval-q10","rationale":"Explains the analogous immutable-baseline masking mechanism for deleted documents.","relevance":2}
+{"document_id":"eval-doc-03","query_id":"eval-q10","rationale":"Explains general compaction mechanics but not vector update masking specifically.","relevance":1}
