@@ -15,6 +15,7 @@ from dynamic_hybrid_retrieval.dense import (
     document_text,
 )
 from dynamic_hybrid_retrieval.event_log import EventLog
+from dynamic_hybrid_retrieval.filters import DocumentFilter
 from dynamic_hybrid_retrieval.index import ApplyResult, ApplyStatus
 from dynamic_hybrid_retrieval.models import Document, IndexEvent, Operation
 
@@ -186,7 +187,12 @@ class DynamicHNSWIndex:
         )
 
     def search(
-        self, query: str, *, limit: int = 10, exact: bool = False
+        self,
+        query: str,
+        *,
+        limit: int = 10,
+        exact: bool = False,
+        document_filter: DocumentFilter | None = None,
     ) -> list[DenseSearchResult]:
         if limit < 1:
             raise ValueError("limit must be positive")
@@ -195,20 +201,26 @@ class DynamicHNSWIndex:
                 not self._baseline_is_current(document_id)
                 for document_id in self._baseline_documents
             )
-            baseline_limit = min(
-                self.baseline.document_count,
-                limit + masked_baseline_count,
-            )
-            baseline_results = (
-                self.baseline.search(query, limit=baseline_limit, exact=exact)
-                if baseline_limit
-                else []
-            )
-            candidates = [
-                result
-                for result in baseline_results
-                if self._baseline_is_current(result.document_id)
-            ]
+            baseline_limit = min(self.baseline.document_count, limit + masked_baseline_count)
+            candidates: list[DenseSearchResult] = []
+            while baseline_limit:
+                baseline_results = self.baseline.search(
+                    query,
+                    limit=baseline_limit,
+                    exact=exact,
+                )
+                candidates = [
+                    result
+                    for result in baseline_results
+                    if self._baseline_is_current(result.document_id)
+                    and (document_filter is None or document_filter.matches(result.document))
+                ]
+                if len(candidates) >= limit or baseline_limit == self.baseline.document_count:
+                    break
+                baseline_limit = min(
+                    self.baseline.document_count,
+                    max(baseline_limit * 2, limit + masked_baseline_count),
+                )
 
             if self._delta_documents:
                 query_vector = self.baseline.embedding_model.embed_query(query)
@@ -217,21 +229,32 @@ class DynamicHNSWIndex:
                     raise ValueError(
                         f"embedding shape {query_vector.shape} does not match {expected_shape}"
                     )
-                matches = self._delta_index.search(
-                    query_vector[0],
-                    count=min(limit, len(self._delta_documents)),
-                    exact=exact,
+                delta_limit = min(
+                    len(self._delta_documents),
+                    limit if document_filter is None else max(limit * 2, 16),
                 )
-                candidates.extend(
-                    DenseSearchResult(
-                        document_id=self._documents_by_key[int(key)].document_id,
-                        score=1.0 - float(distance),
-                        distance=float(distance),
-                        version=self._documents_by_key[int(key)].version,
-                        document=self._documents_by_key[int(key)],
+                while delta_limit:
+                    matches = self._delta_index.search(
+                        query_vector[0],
+                        count=delta_limit,
+                        exact=exact,
                     )
-                    for key, distance in zip(matches.keys, matches.distances, strict=True)
-                )
+                    delta_candidates = [
+                        DenseSearchResult(
+                            document_id=self._documents_by_key[int(key)].document_id,
+                            score=1.0 - float(distance),
+                            distance=float(distance),
+                            version=self._documents_by_key[int(key)].version,
+                            document=self._documents_by_key[int(key)],
+                        )
+                        for key, distance in zip(matches.keys, matches.distances, strict=True)
+                        if document_filter is None
+                        or document_filter.matches(self._documents_by_key[int(key)])
+                    ]
+                    if len(delta_candidates) >= limit or delta_limit == len(self._delta_documents):
+                        candidates.extend(delta_candidates)
+                        break
+                    delta_limit = min(len(self._delta_documents), delta_limit * 2)
             return sorted(candidates, key=lambda item: (-item.score, item.document_id))[:limit]
 
     def _current_document(self, document_id: str) -> Document | None:

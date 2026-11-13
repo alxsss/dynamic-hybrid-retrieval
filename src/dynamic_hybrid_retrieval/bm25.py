@@ -17,6 +17,7 @@ from typing import Any, Final
 import orjson
 from pydantic import ValidationError
 
+from dynamic_hybrid_retrieval.filters import DocumentFilter
 from dynamic_hybrid_retrieval.models import Document
 from dynamic_hybrid_retrieval.tokenizer import Tokenizer, TokenizerConfig
 
@@ -174,7 +175,13 @@ class BM25Index:
             1.0 + (self.document_count - document_frequency + 0.5) / (document_frequency + 0.5)
         )
 
-    def search(self, query: str, *, limit: int = 10) -> list[SearchResult]:
+    def search(
+        self,
+        query: str,
+        *,
+        limit: int = 10,
+        document_filter: DocumentFilter | None = None,
+    ) -> list[SearchResult]:
         if limit < 1:
             raise ValueError("limit must be at least one")
         query_terms = tuple(dict.fromkeys(self.tokenizer.tokenize(query)))
@@ -186,6 +193,10 @@ class BM25Index:
         for term in query_terms:
             idf = self.inverse_document_frequency(term)
             for posting in self._postings.get(term, ()):
+                if document_filter is not None and not document_filter.matches(
+                    self._documents[posting.document_id]
+                ):
+                    continue
                 document_length = self._document_lengths[posting.document_id]
                 normalization = self.k1 * (1.0 - self.b + self.b * document_length / average_length)
                 scores[posting.document_id] += idf * (

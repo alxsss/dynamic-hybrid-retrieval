@@ -10,6 +10,7 @@ from enum import StrEnum
 
 from dynamic_hybrid_retrieval.bm25 import BM25Index, SearchResult
 from dynamic_hybrid_retrieval.event_log import EventLog
+from dynamic_hybrid_retrieval.filters import DocumentFilter
 from dynamic_hybrid_retrieval.models import Document, IndexEvent, Operation
 
 
@@ -239,7 +240,13 @@ class DynamicIndex:
             + (self._live_document_count - document_frequency + 0.5) / (document_frequency + 0.5)
         )
 
-    def search(self, query: str, *, limit: int = 10) -> list[SearchResult]:
+    def search(
+        self,
+        query: str,
+        *,
+        limit: int = 10,
+        document_filter: DocumentFilter | None = None,
+    ) -> list[SearchResult]:
         """Search the baseline and delta with shared logical-corpus statistics."""
 
         if limit < 1:
@@ -259,6 +266,10 @@ class DynamicIndex:
                 for posting in self.baseline.postings.get(term, ()):
                     if not self._is_current_baseline_document(posting.document_id):
                         continue
+                    if document_filter is not None and not document_filter.matches(
+                        self.baseline.documents[posting.document_id]
+                    ):
+                        continue
                     document_length = self.baseline.document_lengths[posting.document_id]
                     scores[posting.document_id] += self._score_term(
                         idf,
@@ -268,6 +279,10 @@ class DynamicIndex:
                     )
 
                 for document_id, frequency in self._delta_postings.get(term, {}).items():
+                    if document_filter is not None and not document_filter.matches(
+                        self._delta_documents[document_id]
+                    ):
+                        continue
                     scores[document_id] += self._score_term(
                         idf,
                         frequency,

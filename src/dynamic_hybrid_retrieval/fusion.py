@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from dynamic_hybrid_retrieval.dynamic_dense import DynamicHNSWIndex
+from dynamic_hybrid_retrieval.filters import DocumentFilter
 from dynamic_hybrid_retrieval.index import DynamicIndex
 from dynamic_hybrid_retrieval.models import Document
 
@@ -176,6 +177,7 @@ class HybridSearcher:
         *,
         limit: int = 10,
         exact_dense: bool = False,
+        document_filter: DocumentFilter | None = None,
     ) -> list[FusedSearchResult]:
         if limit < 1:
             raise ValueError("limit must be positive")
@@ -187,11 +189,16 @@ class HybridSearcher:
             raise HybridConsistencyError(
                 f"lexical sequence {before[0]} differs from dense sequence {before[1]}"
             )
-        lexical_results = self.lexical.search(query, limit=self.config.candidate_limit)
+        lexical_results = self.lexical.search(
+            query,
+            limit=self.config.candidate_limit,
+            document_filter=document_filter,
+        )
         dense_results = self.dense.search(
             query,
             limit=self.config.candidate_limit,
             exact=exact_dense,
+            document_filter=document_filter,
         )
         after = self._sequence_pair()
         if after != before:

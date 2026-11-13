@@ -16,6 +16,7 @@ import orjson
 from usearch.index import Index
 
 from dynamic_hybrid_retrieval.embeddings import EmbeddingModel
+from dynamic_hybrid_retrieval.filters import DocumentFilter
 from dynamic_hybrid_retrieval.models import Document
 
 DENSE_FORMAT_VERSION: Final = 1
@@ -146,7 +147,12 @@ class HNSWIndex:
         return self._documents
 
     def search(
-        self, query: str, *, limit: int = 10, exact: bool = False
+        self,
+        query: str,
+        *,
+        limit: int = 10,
+        exact: bool = False,
+        document_filter: DocumentFilter | None = None,
     ) -> list[DenseSearchResult]:
         if limit < 1:
             raise ValueError("limit must be positive")
@@ -155,22 +161,30 @@ class HNSWIndex:
         query_vector = self.embedding_model.embed_query(query)
         if query_vector.shape != (1, self.embedding_model.dimension):
             raise ValueError("embedding model returned an invalid query matrix")
-        matches = self._index.search(
-            query_vector[0],
-            count=min(limit, len(self._documents)),
-            exact=exact,
+        candidate_count = min(
+            len(self._documents),
+            limit if document_filter is None else max(limit * 2, 16),
         )
-        results = [
-            DenseSearchResult(
-                document_id=self._documents[int(key)].document_id,
-                score=1.0 - float(distance),
-                distance=float(distance),
-                version=self._documents[int(key)].version,
-                document=self._documents[int(key)],
+        while True:
+            matches = self._index.search(
+                query_vector[0],
+                count=candidate_count,
+                exact=exact,
             )
-            for key, distance in zip(matches.keys, matches.distances, strict=True)
-        ]
-        return sorted(results, key=lambda item: (-item.score, item.document_id))
+            results = [
+                DenseSearchResult(
+                    document_id=self._documents[int(key)].document_id,
+                    score=1.0 - float(distance),
+                    distance=float(distance),
+                    version=self._documents[int(key)].version,
+                    document=self._documents[int(key)],
+                )
+                for key, distance in zip(matches.keys, matches.distances, strict=True)
+                if document_filter is None or document_filter.matches(self._documents[int(key)])
+            ]
+            if len(results) >= limit or candidate_count == len(self._documents):
+                return sorted(results, key=lambda item: (-item.score, item.document_id))[:limit]
+            candidate_count = min(len(self._documents), candidate_count * 2)
 
     def save(self, path: str | Path) -> Path:
         target = Path(path)
