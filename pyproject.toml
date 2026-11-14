@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.115,<1",
     "matplotlib>=3.11.2",
     "numpy>=2.5.4",
     "orjson>=3.13.0",
@@ -16,6 +17,7 @@ dependencies = [
     "sentence-transformers>=6.2.0",
     "typer>=0.27.3",
     "usearch>=2.26.6",
+    "uvicorn[standard]>=0.34,<1",
 ]
 
 [project.scripts]
@@ -28,6 +30,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28,<1",
     "mypy>=2.4.0",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",

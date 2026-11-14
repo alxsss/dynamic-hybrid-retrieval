@@ -5,6 +5,8 @@ from __future__ import annotations
 import threading
 from dataclasses import dataclass
 
+from dynamic_hybrid_retrieval.bm25 import SearchResult
+from dynamic_hybrid_retrieval.dense import DenseSearchResult
 from dynamic_hybrid_retrieval.dynamic_dense import (
     DenseCompactionSnapshot,
     DynamicHNSWIndex,
@@ -96,6 +98,14 @@ class DynamicHybridIndex:
             )
 
     def _require_healthy(self) -> None:
+        if self._healthy:
+            lexical = self.lexical.statistics
+            dense = self.dense.statistics
+            self._healthy = (
+                lexical.last_sequence_number == dense.last_sequence_number
+                and lexical.live_document_count == dense.live_document_count
+                and lexical.tombstone_count == dense.tombstone_count
+            )
         if not self._healthy:
             raise HybridIndexUnhealthyError(
                 "hybrid index is unhealthy after a partial mutation; rebuild it from the WAL"
@@ -162,6 +172,42 @@ class DynamicHybridIndex:
                 query,
                 limit=limit,
                 exact_dense=exact_dense,
+                document_filter=document_filter,
+            )
+
+    def search_lexical(
+        self,
+        query: str,
+        *,
+        limit: int = 10,
+        document_filter: DocumentFilter | None = None,
+    ) -> list[SearchResult]:
+        """Search BM25 while holding the shared hybrid serving boundary."""
+
+        with self._lock:
+            self._require_healthy()
+            return self.lexical.search(
+                query,
+                limit=limit,
+                document_filter=document_filter,
+            )
+
+    def search_dense(
+        self,
+        query: str,
+        *,
+        limit: int = 10,
+        exact: bool = False,
+        document_filter: DocumentFilter | None = None,
+    ) -> list[DenseSearchResult]:
+        """Search HNSW while holding the shared hybrid serving boundary."""
+
+        with self._lock:
+            self._require_healthy()
+            return self.dense.search(
+                query,
+                limit=limit,
+                exact=exact,
                 document_filter=document_filter,
             )
 

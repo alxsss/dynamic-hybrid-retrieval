@@ -193,5 +193,5 @@ def test_direct_child_mutation_is_detected_before_search(tmp_path: Path) -> None
     hybrid = build_hybrid(tmp_path)
     hybrid.lexical.apply(upsert(1, document("doc-c", "bypassed coordinator")))
 
-    with pytest.raises(HybridConsistencyError, match="sequence"):
+    with pytest.raises(HybridIndexUnhealthyError, match="unhealthy"):
         hybrid.search("bypassed")

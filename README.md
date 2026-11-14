@@ -20,6 +20,7 @@ read-only operational health checks.
 - Checksummed append-only write-ahead logging and deterministic replay
 - A fail-closed coordinator for consistent hybrid updates, reads, and snapshots
 - Validated, atomically activated hybrid generations containing BM25 and HNSW
+- Versioned HTTP mutation/search API with lifecycle health and bounded requests
 - Deterministic benchmarks and correctness gates
 
 Week 2's dense, hybrid, filtered, and evaluated retrieval is documented in
@@ -67,5 +68,5 @@ for design assumptions and failure semantics.
 The current system is intentionally single-process and single-writer. It is
 crash-consistent on a local filesystem with atomic rename support, but it is not
 a distributed or highly available search service. Coordinated hybrid artifact
-An HTTP service, WAL retention, and OpenSearch comparison are remaining Week 3
-milestones; replication and sharding remain out of scope.
+WAL retention and OpenSearch comparison are remaining Week 3 milestones;
+replication and sharding remain out of scope.

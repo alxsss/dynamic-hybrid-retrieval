@@ -1,6 +1,6 @@
 # Week 3 RFC: Production Serving and Operational Hardening
 
-Status: Days 1-2 complete
+Status: Days 1-3 complete
 Last updated: 2026-11-13
 
 ## Goal
@@ -65,7 +65,7 @@ one embedding identity, document count, and high-water sequence. `active.json` i
 pointer and is replaced atomically after both engines reload and reproduce the snapshot's lexical
 and exact-dense validation results.
 
-### Day 3: Service boundary
+### Day 3: Service boundary — complete
 
 - Add versioned HTTP endpoints for mutation, lexical/dense/hybrid search, health, and readiness.
 - Validate request sizes, filter expressions, sequence numbers, and timeouts.

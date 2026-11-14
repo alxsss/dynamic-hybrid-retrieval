@@ -7,10 +7,12 @@ from typing import Annotated
 
 import orjson
 import typer
+import uvicorn
 
 from dynamic_hybrid_retrieval.benchmark import BenchmarkConfig, run_benchmark
 from dynamic_hybrid_retrieval.diagnostics import inspect_repository
 from dynamic_hybrid_retrieval.experiment import ComparisonConfig, run_comparison
+from dynamic_hybrid_retrieval.service import ServiceConfig, create_app
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
 
@@ -44,6 +46,52 @@ def benchmark(
     typer.echo(orjson.dumps(report.as_dict(), option=orjson.OPT_INDENT_2).decode())
     if not report.passed:
         raise typer.Exit(code=1)
+
+
+@app.command()
+def serve(
+    repository: Annotated[Path, typer.Option(help="Hybrid index repository directory.")],
+    event_log: Annotated[Path, typer.Option(help="Checksummed event-log file.")],
+    host: Annotated[str, typer.Option(help="HTTP bind address.")] = "127.0.0.1",
+    port: Annotated[int, typer.Option(min=1, max=65535, help="HTTP bind port.")] = 8000,
+    embedding_model: Annotated[
+        str, typer.Option(help="'hashing' or a Sentence Transformers model ID.")
+    ] = "hashing",
+    embedding_dimension: Annotated[
+        int, typer.Option(min=8, help="Hashing embedder dimension.")
+    ] = 256,
+    embedding_device: Annotated[
+        str | None, typer.Option(help="Sentence Transformers device, such as cpu or mps.")
+    ] = None,
+    timeout: Annotated[
+        float, typer.Option(min=0.001, help="Per-operation timeout in seconds.")
+    ] = 10.0,
+    max_request_bytes: Annotated[
+        int, typer.Option(min=1, help="Maximum HTTP request body size.")
+    ] = 1_048_576,
+    no_fsync: Annotated[
+        bool, typer.Option(help="Disable WAL fsync; unsafe outside local development.")
+    ] = False,
+) -> None:
+    """Run the single-writer HTTP retrieval service."""
+
+    config = ServiceConfig(
+        repository_path=repository,
+        event_log_path=event_log,
+        embedding_model=embedding_model,
+        embedding_dimension=embedding_dimension,
+        embedding_device=embedding_device,
+        fsync_event_log=not no_fsync,
+        request_timeout_seconds=timeout,
+        max_request_bytes=max_request_bytes,
+    )
+    uvicorn.run(
+        create_app(config),
+        host=host,
+        port=port,
+        workers=1,
+        access_log=True,
+    )
 
 
 @app.command()
