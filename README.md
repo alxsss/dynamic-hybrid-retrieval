@@ -7,9 +7,10 @@ log, and compacts logical state into atomically activated immutable generations.
 
 The project exists to make indexing mechanics visible and testable before later
 comparison with OpenSearch. It currently covers deterministic tokenization and
-BM25 ranking, persistent HNSW dense retrieval, inserts and updates,
-tombstone-based deletion, crash replay, compaction validation, rollback,
-benchmarking, and read-only operational health checks.
+BM25 ranking, persistent HNSW dense retrieval, reciprocal-rank fusion, typed
+metadata filtering, inserts and updates, tombstone-based deletion, crash replay,
+compaction validation, rollback, benchmarking, relevance evaluation, and
+read-only operational health checks.
 
 ## Architecture
 
@@ -17,11 +18,13 @@ benchmarking, and read-only operational health checks.
 - Searchable in-memory lexical and dense deltas
 - Version masking and deletion tombstones
 - Checksummed append-only write-ahead logging and deterministic replay
-- Validated compaction with atomic generation activation and rollback
+- A fail-closed coordinator for consistent hybrid updates, reads, and snapshots
+- Validated BM25 generation activation and separately validated dense compaction
 - Deterministic benchmarks and correctness gates
 
-Reciprocal-rank fusion, metadata filtering, and hand-verified relevance
-evaluation are active milestones documented in `docs/week2-rfc.md`.
+Week 2's dense, hybrid, filtered, and evaluated retrieval is documented in
+`docs/week2-rfc.md` and `docs/week2-results.md`. Week 3 production serving and
+operational hardening is tracked in `docs/week3-rfc.md`.
 
 ## Development checks
 
@@ -55,13 +58,14 @@ fails.
   --event-log .local/acceptance/events.jsonl
 ```
 
-See [the RFC](docs/rfc.md), [benchmark plan](docs/benchmark-plan.md), and
-[operations guide](docs/operations.md) for design assumptions and failure
-semantics.
+See [the original RFC](docs/rfc.md), [Week 3 RFC](docs/week3-rfc.md),
+[benchmark plan](docs/benchmark-plan.md), and [operations guide](docs/operations.md)
+for design assumptions and failure semantics.
 
 ## Scope
 
 The current system is intentionally single-process and single-writer. It is
 crash-consistent on a local filesystem with atomic rename support, but it is not
-a distributed or highly available search service. OpenSearch comparison,
-replication, sharding, and hybrid fusion remain future milestones.
+a distributed or highly available search service. Coordinated hybrid artifact
+activation, an HTTP service, WAL retention, and OpenSearch comparison are Week 3
+milestones; replication and sharding remain out of scope.
