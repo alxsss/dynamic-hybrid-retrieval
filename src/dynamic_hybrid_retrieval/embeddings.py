@@ -101,7 +101,7 @@ class SentenceTransformerEmbedding:
         self._model_name = model_name
         self._batch_size = batch_size
         self._model = SentenceTransformer(model_name, device=device)
-        dimension = self._model.get_sentence_embedding_dimension()
+        dimension = self._model.get_embedding_dimension()
         if dimension is None or dimension < 1:
             raise ValueError("embedding model did not report a valid dimension")
         self._dimension = dimension

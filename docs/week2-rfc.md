@@ -1,6 +1,6 @@
 # Week 2 RFC: Dense and hybrid retrieval
 
-**Status:** In progress  
+**Status:** Complete
 **Scope:** Embeddings, HNSW, reciprocal-rank fusion, metadata filters, and evaluation
 
 ## Goals
@@ -33,7 +33,7 @@ mapping, model identity, dimensionality, metric, and construction parameters.
 4. Add typed metadata filters with pre-filter/post-filter correctness tests. **Complete.**
 5. Create the first hand-verified query/relevance judgment set. **Complete.**
 6. Implement Recall@K, MRR, nDCG@K, latency, and HNSW recall measurements. **Complete.**
-7. Produce reproducible BM25-versus-dense-versus-hybrid results and analysis.
+7. Produce reproducible BM25-versus-dense-versus-hybrid results and analysis. **Complete.**
 
 ## Initial decisions
 

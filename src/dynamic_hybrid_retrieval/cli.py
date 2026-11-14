@@ -10,6 +10,7 @@ import typer
 
 from dynamic_hybrid_retrieval.benchmark import BenchmarkConfig, run_benchmark
 from dynamic_hybrid_retrieval.diagnostics import inspect_repository
+from dynamic_hybrid_retrieval.experiment import ComparisonConfig, run_comparison
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
 
@@ -56,6 +57,38 @@ def status(
     typer.echo(orjson.dumps(result.as_dict(), option=orjson.OPT_INDENT_2).decode())
     if not result.healthy:
         raise typer.Exit(code=1)
+
+
+@app.command()
+def evaluate(
+    dataset: Annotated[Path, typer.Option(help="Versioned evaluation-set directory.")],
+    output: Annotated[Path, typer.Option(help="New or empty report directory.")],
+    model: Annotated[str, typer.Option(help="Sentence Transformers model ID.")] = (
+        "sentence-transformers/all-MiniLM-L6-v2"
+    ),
+    k: Annotated[int, typer.Option(min=1, help="Evaluation cutoff.")] = 5,
+    candidates: Annotated[int, typer.Option(min=1, help="Candidates per RRF source.")] = 16,
+    warmups: Annotated[int, typer.Option(min=0, help="Warm-up rounds.")] = 2,
+    rounds: Annotated[int, typer.Option(min=1, help="Measured rounds.")] = 10,
+    device: Annotated[
+        str | None, typer.Option(help="Embedding device, such as cpu or mps.")
+    ] = None,
+) -> None:
+    """Compare BM25, dense HNSW, and hybrid RRF retrieval."""
+
+    report = run_comparison(
+        dataset,
+        output,
+        config=ComparisonConfig(
+            k=k,
+            candidate_limit=candidates,
+            warmup_rounds=warmups,
+            measured_rounds=rounds,
+            model_name=model,
+        ),
+        device=device,
+    )
+    typer.echo(orjson.dumps(report.as_dict(), option=orjson.OPT_INDENT_2).decode())
 
 
 if __name__ == "__main__":
