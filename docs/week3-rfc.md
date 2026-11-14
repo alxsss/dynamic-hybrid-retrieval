@@ -1,6 +1,6 @@
 # Week 3 RFC: Production Serving and Operational Hardening
 
-Status: In progress  
+Status: Days 1-2 complete
 Last updated: 2026-11-13
 
 ## Goal
@@ -25,7 +25,7 @@ same data, queries, filters, updates, and metrics.
 
 ## Seven-day implementation plan
 
-### Day 1: Coordinated hybrid state
+### Day 1: Coordinated hybrid state — complete
 
 - Add `DynamicHybridIndex` as the only supported write and read boundary.
 - Serialize update, search, and snapshot operations across BM25 and HNSW.
@@ -33,12 +33,37 @@ same data, queries, filters, updates, and metrics.
 - Reject inconsistent startup state and poison a process after partial mutation.
 - Verify deterministic repair by restart and WAL replay.
 
-### Day 2: Atomic hybrid generations
+### Day 2: Atomic hybrid generations — complete
 
 - Store BM25 and HNSW artifacts beneath one generation directory.
 - Record model/config fingerprints and checksums in a generation manifest.
 - Build and validate both artifacts before atomically changing `active.json`.
 - Retain the previous generation for rollback and ignore abandoned candidates.
+
+The implemented layout is:
+
+```text
+repository/
+├── active.json
+├── compaction.lock
+└── generations/
+    └── generation-000001/
+        ├── generation.json
+        ├── lexical/
+        │   ├── manifest.json
+        │   ├── manifest.sha256
+        │   ├── documents.jsonl
+        │   └── postings.jsonl
+        └── dense/
+            ├── manifest.json
+            ├── documents.jsonl
+            └── vectors.usearch
+```
+
+The inner manifests protect each engine's files. `generation.json` binds both inner manifests to
+one embedding identity, document count, and high-water sequence. `active.json` is the only mutable
+pointer and is replaced atomically after both engines reload and reproduce the snapshot's lexical
+and exact-dense validation results.
 
 ### Day 3: Service boundary
 
