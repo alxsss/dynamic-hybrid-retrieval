@@ -1,6 +1,6 @@
 # Week 3 RFC: Production Serving and Operational Hardening
 
-Status: Days 1-4 complete
+Status: Days 1-5 complete
 Last updated: 2026-11-14
 
 ## Goal
@@ -88,7 +88,7 @@ After a hybrid generation is activated, compaction writes a checksummed WAL chec
 retention floor is the smaller of the active and rollback generation sequences. Only sealed segments
 ending at or below that floor can be deleted. Replay requests below the floor fail explicitly.
 
-### Day 5: Concurrency, load, and failure testing
+### Day 5: Concurrency, load, and failure testing — complete
 
 - Exercise concurrent readers, one writer, compaction, restart, and rollback.
 - Measure update-to-search visibility, p50/p95/p99 query latency, throughput, and recovery time.

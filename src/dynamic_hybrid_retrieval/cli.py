@@ -12,6 +12,7 @@ import uvicorn
 from dynamic_hybrid_retrieval.benchmark import BenchmarkConfig, run_benchmark
 from dynamic_hybrid_retrieval.diagnostics import inspect_repository
 from dynamic_hybrid_retrieval.experiment import ComparisonConfig, run_comparison
+from dynamic_hybrid_retrieval.load_test import LoadTestConfig, run_load_test
 from dynamic_hybrid_retrieval.service import ServiceConfig, create_app
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
@@ -20,6 +21,21 @@ app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
 @app.callback()
 def main() -> None:
     """Operate and benchmark the dynamic retrieval prototype."""
+
+
+@app.command("load-test")
+def load_test(
+    output: Annotated[Path, typer.Option(help="New or empty report directory.")],
+    documents: Annotated[int, typer.Option(min=1)] = 1_000,
+    events: Annotated[int, typer.Option(min=1)] = 200,
+    readers: Annotated[int, typer.Option(min=1)] = 4,
+    queries: Annotated[int, typer.Option(min=1)] = 100,
+) -> None:
+    """Run concurrent readers, a writer, compaction, and recovery."""
+    report = run_load_test(output, LoadTestConfig(documents, events, readers, queries))
+    typer.echo(orjson.dumps(report.as_dict(), option=orjson.OPT_INDENT_2).decode())
+    if not report.passed:
+        raise typer.Exit(code=1)
 
 
 @app.command()
