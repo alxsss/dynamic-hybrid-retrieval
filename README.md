@@ -24,6 +24,7 @@ read-only operational health checks.
 - Versioned HTTP mutation/search API with lifecycle health and bounded requests
 - Deterministic benchmarks and correctness gates
 - Concurrent reader/writer/compaction load testing with recovery verification
+- OpenSearch REST adapter using the same embeddings and client-side RRF
 
 Week 2's dense, hybrid, filtered, and evaluated retrieval is documented in
 `docs/week2-rfc.md` and `docs/week2-results.md`. Week 3 production serving and

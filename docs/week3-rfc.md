@@ -1,6 +1,6 @@
 # Week 3 RFC: Production Serving and Operational Hardening
 
-Status: Days 1-5 complete
+Status: Days 1-6 complete
 Last updated: 2026-11-14
 
 ## Goal
@@ -95,7 +95,7 @@ ending at or below that floor can be deleted. Replay requests below the floor fa
 - Inject embedding, disk, manifest, and process failures and verify invariants.
 - Report separate before-update, after-update, filtered, and post-compaction results.
 
-### Day 6: OpenSearch comparison
+### Day 6: OpenSearch comparison — complete
 
 - Run the same corpus, event stream, queries, filters, and relevance judgments against OpenSearch.
 - Compare correctness, freshness, latency, operational complexity, and resource use.
