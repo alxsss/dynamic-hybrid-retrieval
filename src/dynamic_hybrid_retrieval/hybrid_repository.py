@@ -27,6 +27,7 @@ from dynamic_hybrid_retrieval.dense import (
 from dynamic_hybrid_retrieval.embeddings import EmbeddingModel
 from dynamic_hybrid_retrieval.event_log import EventLog
 from dynamic_hybrid_retrieval.hybrid_index import DynamicHybridIndex, HybridCompactionSnapshot
+from dynamic_hybrid_retrieval.segmented_event_log import SegmentedEventLog
 
 HYBRID_REPOSITORY_FORMAT_VERSION: Final = 1
 ACTIVE_MANIFEST_FILE: Final = "active.json"
@@ -468,6 +469,12 @@ class HybridIndexRepository:
                 )
                 self._write_active_manifest(manifest)
                 activated = True
+                event_log = hybrid.lexical.event_log
+                if isinstance(event_log, SegmentedEventLog):
+                    event_log.checkpoint(
+                        active_generation_sequence=snapshot.high_water_sequence,
+                        rollback_generation_sequence=current.active_sequence_number,
+                    )
                 return HybridCompactionResult(
                     manifest=manifest,
                     generation_path=generation_path,

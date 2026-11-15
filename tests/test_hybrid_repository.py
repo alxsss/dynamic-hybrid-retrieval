@@ -21,6 +21,7 @@ from dynamic_hybrid_retrieval.hybrid_repository import (
     NoHybridRollbackGenerationError,
 )
 from dynamic_hybrid_retrieval.models import Document, IndexEvent, Operation
+from dynamic_hybrid_retrieval.segmented_event_log import SegmentedEventLog
 
 NOW = datetime(2026, 11, 13, 12, 0, tzinfo=UTC)
 
@@ -288,3 +289,35 @@ def test_baseline_sequence_mismatch_rejects_compaction(
 
 def test_active_manifest_file_name_is_stable() -> None:
     assert ACTIVE_MANIFEST_FILE == "active.json"
+
+
+def test_successive_compactions_checkpoint_segmented_wal_for_safe_retention(
+    tmp_path: Path,
+    documents: list[Document],
+    embedding: HashingEmbedding,
+) -> None:
+    repository = HybridIndexRepository(tmp_path / "hybrid-repository")
+    repository.initialize(
+        BM25Index.build(documents),
+        HNSWIndex.build(documents, embedding),
+    )
+    event_log = SegmentedEventLog(
+        tmp_path / "wal",
+        fsync=False,
+        max_segment_events=2,
+    )
+    hybrid = repository.load_active(event_log, embedding)
+    hybrid.apply(upsert(1, document("doc-c", "first delta")))
+    hybrid.apply(upsert(2, document("doc-d", "second delta")))
+    repository.compact(hybrid)
+
+    hybrid = repository.load_active(event_log, embedding)
+    hybrid.apply(upsert(3, document("doc-e", "third delta")))
+    hybrid.apply(upsert(4, document("doc-f", "fourth delta")))
+    repository.compact(hybrid)
+
+    assert event_log.checkpoint_state is not None
+    assert event_log.checkpoint_state.active_generation_sequence == 4
+    assert event_log.checkpoint_state.rollback_generation_sequence == 2
+    assert event_log.retention_floor_sequence == 2
+    assert [item.sequence_number for item in event_log.iter_events(after_sequence=2)] == [3, 4]

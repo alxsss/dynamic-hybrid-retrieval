@@ -69,6 +69,18 @@ def serve(
     max_request_bytes: Annotated[
         int, typer.Option(min=1, help="Maximum HTTP request body size.")
     ] = 1_048_576,
+    segmented_wal: Annotated[
+        bool, typer.Option(help="Use a segmented WAL directory instead of one JSONL file.")
+    ] = False,
+    wal_segment_bytes: Annotated[
+        int, typer.Option(min=1, help="Rotate segmented WAL at this byte count.")
+    ] = 64 * 1024 * 1024,
+    wal_segment_events: Annotated[
+        int, typer.Option(min=1, help="Rotate segmented WAL at this event count.")
+    ] = 100_000,
+    wal_max_retained_bytes: Annotated[
+        int | None, typer.Option(min=1, help="Optional hard WAL storage budget.")
+    ] = None,
     no_fsync: Annotated[
         bool, typer.Option(help="Disable WAL fsync; unsafe outside local development.")
     ] = False,
@@ -84,6 +96,10 @@ def serve(
         fsync_event_log=not no_fsync,
         request_timeout_seconds=timeout,
         max_request_bytes=max_request_bytes,
+        segmented_wal=segmented_wal,
+        wal_segment_bytes=wal_segment_bytes,
+        wal_segment_events=wal_segment_events,
+        wal_max_retained_bytes=wal_max_retained_bytes,
     )
     uvicorn.run(
         create_app(config),

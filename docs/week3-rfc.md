@@ -1,7 +1,7 @@
 # Week 3 RFC: Production Serving and Operational Hardening
 
-Status: Days 1-3 complete
-Last updated: 2026-11-13
+Status: Days 1-4 complete
+Last updated: 2026-11-14
 
 ## Goal
 
@@ -72,12 +72,21 @@ and exact-dense validation results.
 - Implement graceful startup, WAL recovery, dependency initialization, and graceful shutdown.
 - Emit stable error codes without leaking internal details.
 
-### Day 4: WAL lifecycle
+### Day 4: WAL lifecycle — complete
 
 - Segment the WAL and seal immutable segments.
 - Checkpoint only after a hybrid generation is durably active.
 - Retain enough segments for rollback, then delete only provably obsolete segments.
 - Test crash tails, checksum corruption, interrupted rotation, replay, and disk-pressure behavior.
+
+The production WAL uses one mutable `active.jsonl` plus immutable sealed segments whose names record
+their first and last sequence. Rotation atomically renames the active file; a crash between rename
+and the next append simply leaves no active file, which recovery treats as valid. Only the active
+file may repair an incomplete crash tail. Any corruption in a sealed segment is fatal.
+
+After a hybrid generation is activated, compaction writes a checksummed WAL checkpoint. Its safe
+retention floor is the smaller of the active and rollback generation sequences. Only sealed segments
+ending at or below that floor can be deleted. Replay requests below the floor fail explicitly.
 
 ### Day 5: Concurrency, load, and failure testing
 
@@ -118,9 +127,9 @@ while holding the outer lock.
 ## Current limitations
 
 - One process and one writer; distributed consensus and sharding are out of scope.
-- Day 1 cannot atomically activate two persisted artifacts; Day 2 supplies that boundary.
 - The in-process coordinator cannot prevent unsupported code from mutating a child index directly,
   but sequence divergence is detected and fails search. The service layer will expose only the
   coordinator.
 - If embedding generation is nondeterministic, recovery may reproduce document state but not
-  bit-identical vectors. Production model identity and determinism checks arrive with manifests.
+  bit-identical vectors. Manifests enforce model identity, but provider determinism remains an
+  operational requirement.

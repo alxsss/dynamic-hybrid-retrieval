@@ -13,10 +13,12 @@ from dynamic_hybrid_retrieval.embeddings import HashingEmbedding
 from dynamic_hybrid_retrieval.event_log import EventLog
 from dynamic_hybrid_retrieval.hybrid_repository import HybridIndexRepository
 from dynamic_hybrid_retrieval.models import Document, IndexEvent, Operation
+from dynamic_hybrid_retrieval.segmented_event_log import SegmentedEventLog
 from dynamic_hybrid_retrieval.service import (
     ServiceConfig,
     ServiceRuntime,
     create_app,
+    load_runtime,
 )
 
 NOW = datetime(2026, 11, 14, tzinfo=UTC)
@@ -238,3 +240,19 @@ def test_startup_replays_wal_before_readiness(tmp_path: Path) -> None:
 
     assert ready.json()["high_water_sequence"] == 1
     assert search.json()["results"][0]["document_id"] == "doc-c"
+
+
+def test_runtime_can_load_segmented_wal(tmp_path: Path) -> None:
+    config = service_config(tmp_path, segmented_wal=True, wal_segment_events=2)
+    embedding = HashingEmbedding(config.embedding_dimension)
+    documents = [document("doc-a", "segmented recovery")]
+    repository = HybridIndexRepository(config.repository_path)
+    repository.initialize(
+        BM25Index.build(documents),
+        HNSWIndex.build(documents, embedding),
+    )
+
+    runtime = load_runtime(config)
+
+    assert isinstance(runtime.event_log, SegmentedEventLog)
+    assert runtime.index.statistics.healthy

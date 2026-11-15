@@ -18,6 +18,7 @@ read-only operational health checks.
 - Searchable in-memory lexical and dense deltas
 - Version masking and deletion tombstones
 - Checksummed append-only write-ahead logging and deterministic replay
+- Segmented WAL rotation, checkpoint-aware retention, and explicit disk budgets
 - A fail-closed coordinator for consistent hybrid updates, reads, and snapshots
 - Validated, atomically activated hybrid generations containing BM25 and HNSW
 - Versioned HTTP mutation/search API with lifecycle health and bounded requests
@@ -68,5 +69,5 @@ for design assumptions and failure semantics.
 The current system is intentionally single-process and single-writer. It is
 crash-consistent on a local filesystem with atomic rename support, but it is not
 a distributed or highly available search service. Coordinated hybrid artifact
-WAL retention and OpenSearch comparison are remaining Week 3 milestones;
-replication and sharding remain out of scope.
+Concurrency/load testing and OpenSearch comparison are remaining Week 3
+milestones; replication and sharding remain out of scope.

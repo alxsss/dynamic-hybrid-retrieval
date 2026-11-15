@@ -19,7 +19,8 @@ Start a repository created with a 256-dimensional hashing embedder:
 ```bash
 .venv/bin/dhr serve \
   --repository .local/hybrid-repository \
-  --event-log .local/events.jsonl \
+  --event-log .local/wal \
+  --segmented-wal \
   --embedding-model hashing \
   --embedding-dimension 256 \
   --host 127.0.0.1 \
@@ -28,6 +29,9 @@ Start a repository created with a 256-dimensional hashing embedder:
 
 Do not use `--no-fsync` when durability matters. The service deliberately uses one Uvicorn worker;
 multiple independent processes would each own a different in-memory delta.
+
+`--segmented-wal` is recommended for production-style runs. Its event-log path is a directory, not
+a JSONL file. The legacy single-file format remains available by omitting this option.
 
 ## Health
 

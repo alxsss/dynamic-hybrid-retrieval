@@ -54,6 +54,7 @@ from dynamic_hybrid_retrieval.hybrid_repository import (
     HybridRepositoryError,
 )
 from dynamic_hybrid_retrieval.models import Document, IndexEvent, Operation
+from dynamic_hybrid_retrieval.segmented_event_log import SegmentedEventLog
 
 API_VERSION: Final = "v1"
 SERVICE_VERSION: Final = "0.1.0"
@@ -238,6 +239,10 @@ class ServiceConfig:
     fsync_event_log: bool = True
     request_timeout_seconds: float = 10.0
     max_request_bytes: int = 1_048_576
+    segmented_wal: bool = False
+    wal_segment_bytes: int = 64 * 1024 * 1024
+    wal_segment_events: int = 100_000
+    wal_max_retained_bytes: int | None = None
 
     def __post_init__(self) -> None:
         if not self.embedding_model.strip():
@@ -248,6 +253,10 @@ class ServiceConfig:
             raise ValueError("request_timeout_seconds must be positive")
         if self.max_request_bytes < 1:
             raise ValueError("max_request_bytes must be positive")
+        if self.wal_segment_bytes < 1 or self.wal_segment_events < 1:
+            raise ValueError("WAL segment limits must be positive")
+        if self.wal_max_retained_bytes is not None and self.wal_max_retained_bytes < 1:
+            raise ValueError("wal_max_retained_bytes must be positive")
 
     @classmethod
     def from_environment(cls) -> ServiceConfig:
@@ -264,6 +273,12 @@ class ServiceConfig:
             fsync_event_log=_environment_bool("DHR_FSYNC_EVENT_LOG", default=True),
             request_timeout_seconds=float(os.environ.get("DHR_REQUEST_TIMEOUT", "10")),
             max_request_bytes=int(os.environ.get("DHR_MAX_REQUEST_BYTES", "1048576")),
+            segmented_wal=_environment_bool("DHR_SEGMENTED_WAL", default=False),
+            wal_segment_bytes=int(os.environ.get("DHR_WAL_SEGMENT_BYTES", "67108864")),
+            wal_segment_events=int(os.environ.get("DHR_WAL_SEGMENT_EVENTS", "100000")),
+            wal_max_retained_bytes=(
+                int(value) if (value := os.environ.get("DHR_WAL_MAX_RETAINED_BYTES")) else None
+            ),
         )
 
 
@@ -304,7 +319,17 @@ def load_runtime(config: ServiceConfig) -> ServiceRuntime:
 
     embedding = _create_embedding(config)
     repository = HybridIndexRepository(config.repository_path)
-    event_log = EventLog(config.event_log_path, fsync=config.fsync_event_log)
+    event_log = (
+        SegmentedEventLog(
+            config.event_log_path,
+            fsync=config.fsync_event_log,
+            max_segment_bytes=config.wal_segment_bytes,
+            max_segment_events=config.wal_segment_events,
+            max_retained_bytes=config.wal_max_retained_bytes,
+        )
+        if config.segmented_wal
+        else EventLog(config.event_log_path, fsync=config.fsync_event_log)
+    )
     index = repository.load_active(event_log, embedding)
     return ServiceRuntime(repository, event_log, embedding, index)
 
