@@ -1,0 +1,9 @@
+.git
+.venv
+.local
+__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+artifacts
+data/generated

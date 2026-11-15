@@ -39,6 +39,23 @@ uv sync
 .venv/bin/pytest
 ```
 
+## Quick start
+
+```bash
+.venv/bin/dhr initialize \
+  --documents data/evaluation/v1/documents.jsonl \
+  --repository .local/hybrid-repository \
+  --embedding-model hashing \
+  --embedding-dimension 256
+
+.venv/bin/dhr serve \
+  --repository .local/hybrid-repository \
+  --event-log .local/wal \
+  --segmented-wal \
+  --embedding-model hashing \
+  --embedding-dimension 256
+```
+
 ## Acceptance benchmark
 
 ```bash
@@ -66,10 +83,12 @@ See [the original RFC](docs/rfc.md), [Week 3 RFC](docs/week3-rfc.md),
 [benchmark plan](docs/benchmark-plan.md), and [operations guide](docs/operations.md)
 for design assumptions and failure semantics.
 
+Release preparation is documented in [the release checklist](docs/release.md), and security
+boundaries are documented in [the threat model](docs/threat-model.md).
+
 ## Scope
 
 The current system is intentionally single-process and single-writer. It is
 crash-consistent on a local filesystem with atomic rename support, but it is not
-a distributed or highly available search service. Coordinated hybrid artifact
-Concurrency/load testing and OpenSearch comparison are remaining Week 3
-milestones; replication and sharding remain out of scope.
+a distributed or highly available search service. Replication, sharding,
+authentication, and multi-tenancy remain out of scope.

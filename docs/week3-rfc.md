@@ -1,6 +1,6 @@
 # Week 3 RFC: Production Serving and Operational Hardening
 
-Status: Days 1-6 complete
+Status: Complete
 Last updated: 2026-11-14
 
 ## Goal
@@ -101,7 +101,7 @@ ending at or below that floor can be deleted. Replay requests below the floor fa
 - Compare correctness, freshness, latency, operational complexity, and resource use.
 - Document where a managed engine is preferable and what the custom engine demonstrates.
 
-### Day 7: Release package
+### Day 7: Release package — complete
 
 - Add container and local-development entry points, configuration reference, runbook, and threat model.
 - Clean public-repository history and remove local artifacts and secrets.

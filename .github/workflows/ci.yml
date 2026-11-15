@@ -1,0 +1,16 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: .venv/bin/ruff check .
+      - run: .venv/bin/mypy src
+      - run: .venv/bin/pytest --cov=dynamic_hybrid_retrieval --cov-report=term-missing

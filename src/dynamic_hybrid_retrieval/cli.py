@@ -12,6 +12,7 @@ import uvicorn
 from dynamic_hybrid_retrieval.benchmark import BenchmarkConfig, run_benchmark
 from dynamic_hybrid_retrieval.diagnostics import inspect_repository
 from dynamic_hybrid_retrieval.experiment import ComparisonConfig, run_comparison
+from dynamic_hybrid_retrieval.initialize import initialize_repository
 from dynamic_hybrid_retrieval.load_test import LoadTestConfig, run_load_test
 from dynamic_hybrid_retrieval.service import ServiceConfig, create_app
 
@@ -21,6 +22,25 @@ app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
 @app.callback()
 def main() -> None:
     """Operate and benchmark the dynamic retrieval prototype."""
+
+
+@app.command("initialize")
+def initialize_command(
+    documents: Annotated[Path, typer.Option(help="JSONL document snapshot.")],
+    repository: Annotated[Path, typer.Option(help="New hybrid repository directory.")],
+    embedding_model: Annotated[str, typer.Option()] = "hashing",
+    embedding_dimension: Annotated[int, typer.Option(min=8)] = 256,
+    embedding_device: Annotated[str | None, typer.Option()] = None,
+) -> None:
+    """Build and atomically activate the first BM25 and HNSW generation."""
+    manifest = initialize_repository(
+        documents,
+        repository,
+        embedding_model=embedding_model,
+        embedding_dimension=embedding_dimension,
+        embedding_device=embedding_device,
+    )
+    typer.echo(orjson.dumps(manifest.model_dump(mode="json"), option=orjson.OPT_INDENT_2).decode())
 
 
 @app.command("load-test")
