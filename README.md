@@ -29,6 +29,7 @@ read-only operational health checks.
 Week 2's dense, hybrid, filtered, and evaluated retrieval is documented in
 `docs/week2-rfc.md` and `docs/week2-results.md`. Week 3 production serving and
 operational hardening is tracked in `docs/week3-rfc.md`.
+Week 4 distributed partitioning and coordination is tracked in `docs/week4-rfc.md`.
 
 ## Development checks
 
