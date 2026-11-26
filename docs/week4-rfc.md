@@ -1,6 +1,6 @@
 # Week 4 RFC: Distributed Indexing and Query Coordination
 
-Status: Days 1-3 implemented locally
+Status: Days 1-4 implemented locally
 
 ## Goal
 
@@ -61,6 +61,16 @@ committed events to search require additional integration.
 - Fence stale primaries using topology epochs.
 
 ### Day 4: Rebalancing
+
+The local reference model stages document versions and tombstones under the target placement.
+Writes can continue during snapshot copying. A single lock fences writes during catch-up,
+validation, and publication of the new epoch. Cancellation discards staging, and retry takes a
+fresh snapshot. To roll back placement, migrate to the old shard layout with a higher epoch.
+The batch callback lets callers pace the snapshot copy.
+
+The model assumes an authoritative committed stream and stores its state in memory. The final
+catch-up and validation pause writes. Durable migration checkpoints, network transfers, and
+integration with the WAL write coordinator and live search are future work.
 
 - Snapshot source shards, stream catch-up events, and validate destination state.
 - Cut ownership over atomically at an epoch boundary.
