@@ -1,6 +1,6 @@
 # Week 4 RFC: Distributed Indexing and Query Coordination
 
-Status: Day 1 complete
+Status: Days 1-2 complete
 
 ## Goal
 
@@ -28,11 +28,22 @@ pluggable control-plane contract make that boundary explicit.
 - Demonstrate bounded movement when shards are added or removed.
 - Document the control-plane versus data-plane boundary.
 
-### Day 2: Scatter-gather query coordination
+### Day 2: Scatter-gather query coordination — complete
 
 - Fan queries out to shards with per-shard deadlines.
 - Merge deterministic global top-K results and over-fetch safely.
 - Return explicit partial-result metadata when policy permits degraded reads.
+
+The coordinator sends requests concurrently with one monotonic deadline. Each shard receives an
+over-fetched candidate limit and the expected topology epoch. Responses with a stale epoch, wrong
+shard identity, timeout, or exception become explicit failures. The default policy fails the whole
+query; an opt-in degraded-read policy returns results with `partial=true` and failure details.
+
+Score merging requires scores that are globally comparable, for example BM25 computed with global
+term statistics. When shard-local scores are not comparable, the coordinator can instead apply RRF
+over shard rankings. Ties always break by document ID, so network completion order cannot change the
+result. Duplicate transition copies are collapsed only when their document version and contents
+agree; disagreement fails closed.
 
 ### Day 3: Replicated write protocol
 
