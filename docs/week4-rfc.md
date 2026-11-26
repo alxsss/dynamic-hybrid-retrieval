@@ -1,6 +1,6 @@
 # Week 4 RFC: Distributed Indexing and Query Coordination
 
-Status: Days 1-2 complete
+Status: Days 1-3 implemented locally
 
 ## Goal
 
@@ -46,6 +46,15 @@ result. Duplicate transition copies are collapsed only when their document versi
 agree; disagreement fails closed.
 
 ### Day 3: Replicated write protocol
+
+The reference coordinator appends to the primary WAL first and defaults to a majority of the
+configured copies. A failed quorum can leave durable records behind. The running coordinator
+requires an exact retry before advancing. Shards validate the request epoch and document placement
+against their injected topology.
+
+This implementation uses fixed topology and one coordinator per ordered stream. The pending-event
+fence lives in memory. Restart reconciliation, replica repair, network transport, and publishing
+committed events to search require additional integration.
 
 - Route writes to primaries and replicate ordered WAL records.
 - Support configurable acknowledgement quorum and idempotent retries.
